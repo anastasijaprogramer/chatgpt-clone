@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 const NewPrompt = ({ data }) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+
   const [img, setImg] = useState({
     isLoading: false,
     error: "",
@@ -48,24 +49,23 @@ const NewPrompt = ({ data }) => {
         body: JSON.stringify({
           question: question.length ? question : undefined,
           answer,
+          role: "user",
           img: img.dbData?.filePath || undefined,
         }),
       }).then((res) => res.json());
     },
     onSuccess: () => {
-      queryClient
-        .invalidateQueries({ queryKey: ["chat", data._id] })
-        .then(() => {
-          formRef.current.reset();
-          setQuestion("");
-          setAnswer("");
-          setImg({
-            isLoading: false,
-            error: "",
-            dbData: {},
-            aiData: {},
-          });
+      queryClient.invalidateQueries({ queryKey: ["chat", data._id] }).then(() => {
+        formRef.current.reset();
+        setQuestion("");
+        setAnswer("");
+        setImg({
+          isLoading: false,
+          error: "",
+          dbData: {},
+          aiData: {},
         });
+      });
     },
     onError: (err) => {
       console.log(err);

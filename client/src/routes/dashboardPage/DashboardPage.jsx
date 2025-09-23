@@ -18,9 +18,9 @@ const DashboardPage = () => {
         body: JSON.stringify({ text }),
       }).then((res) => res.json());
     },
-    onSuccess: (id) => {
+    onSuccess: async (id) => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["userChats"] });
+      await queryClient.invalidateQueries({ queryKey: ["userChats"] });
       navigate(`/dashboard/chats/${id}`);
     },
   });
@@ -32,12 +32,13 @@ const DashboardPage = () => {
 
     mutation.mutate(text);
   };
+
   return (
     <div className="dashboardPage">
       <div className="texts">
         <div className="logo">
           <img src="/logo.png" alt="" />
-          <h1>LAMA AI</h1>
+          <h1>Psychology</h1>
         </div>
         <div className="options">
           <div className="option">

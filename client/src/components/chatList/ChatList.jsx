@@ -10,7 +10,7 @@ const ChatList = () => {
         credentials: "include",
       }).then((res) => res.json()),
   });
-
+  
   return (
     <div className="chatList">
       <span className="title">DASHBOARD</span>
@@ -24,7 +24,8 @@ const ChatList = () => {
           ? "Loading..."
           : error
           ? "Something went wrong!"
-          : data?.map((chat) => (
+          : Array.isArray(data) &&
+            data.map((chat) => (
               <Link to={`/dashboard/chats/${chat._id}`} key={chat._id}>
                 {chat.title}
               </Link>

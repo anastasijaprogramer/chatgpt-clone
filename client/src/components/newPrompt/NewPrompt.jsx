@@ -18,12 +18,12 @@ const NewPrompt = ({ data }) => {
   });
 
   const chat = model.startChat({
-    history: [
-      data?.history.map(({ role, parts }) => ({
-        role,
-        parts: [{ text: parts[0].text }],
-      })),
-    ],
+    history: Array.isArray(data?.history)
+      ? data.history.map(({ role, parts }) => ({
+          role,
+          parts: [{ text: parts[0].text }],
+        }))
+      : [],
     generationConfig: {
       // maxOutputTokens: 100,
     },
@@ -33,7 +33,7 @@ const NewPrompt = ({ data }) => {
   const formRef = useRef(null);
 
   useEffect(() => {
-    endRef.current.scrollIntoView({ behavior: "smooth" });
+    endRef?.current?.scrollIntoView({ behavior: "smooth" });
   }, [data, question, answer, img.dbData]);
 
   const queryClient = useQueryClient();
@@ -76,9 +76,7 @@ const NewPrompt = ({ data }) => {
     if (!isInitial) setQuestion(text);
 
     try {
-      const result = await chat.sendMessageStream(
-        Object.entries(img.aiData).length ? [img.aiData, text] : [text]
-      );
+      const result = await chat.sendMessageStream(Object.entries(img.aiData).length ? [img.aiData, text] : [text]);
       let accumulatedText = "";
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();

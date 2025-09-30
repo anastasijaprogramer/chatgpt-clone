@@ -18,9 +18,6 @@ const ChatPage = () => {
       }).then((res) => res.json()),
   });
 
-  useEffect(() => {
-    console.log(isPending, data);
-  }, [data, isPending]);
 
   return (
     <div className="chatPage">
@@ -31,16 +28,15 @@ const ChatPage = () => {
             : error
             ? "Something went wrong!"
             : data?.history?.map((message, i) => (
-                <>
+                <div key={i}>
                   {message.img && <IKImage urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT} path={message.img} height="300" width="400" transformation={[{ height: 300, width: 400 }]} loading="lazy" lqip={{ active: true, quality: 20 }} />}
                   <div className={message.role === "user" ? "massage user" : "user"} key={i}>
                     <Markdown>{message.parts[0].text}</Markdown>
                   </div>
-                </>
+                </div>
               ))}
 
-          {/* {data && !isPending && <NewPrompt data={data} />} */}
-          {/* TODO: problem je u ovom delu  */}
+          {data && !isPending && <NewPrompt data={data} />}
         </div>
       </div>
     </div>

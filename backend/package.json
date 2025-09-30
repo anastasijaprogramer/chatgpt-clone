@@ -14,7 +14,9 @@
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.0.16",
     "@clerk/express": "^1.7.33",
+    "@google/genai": "^1.21.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "express": "^4.19.2",
     "imagekit": "^5.2.0",
     "mongoose": "^8.5.1",

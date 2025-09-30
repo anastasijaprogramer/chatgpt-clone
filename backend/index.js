@@ -6,7 +6,9 @@ import ImageKit from "imagekit";
 import mongoose from "mongoose";
 import Chat from "./models/chat.js";
 import UserChats from "./models/userChats.js";
-import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
+import 'dotenv/config'
+import { clerkMiddleware, clerkClient, requireAuth, getAuth } from '@clerk/express'
+
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -18,9 +20,11 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-  })
+  }),
+
 );
 
+app.use(clerkMiddleware())
 app.use(express.json());
 
 const connect = async () => {
@@ -43,10 +47,12 @@ app.get("/api/upload", (req, res) => {
   res.send(result);
 });
 
-app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
+app.post("/api/chats", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req);
   const { text } = req.body;
 
+  if (!userId) return res.status(401).send("userId missing");
   try {
     // CREATE A NEW CHAT
     const newChat = new Chat({
@@ -57,7 +63,7 @@ app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
     const savedChat = await newChat.save();
 
     // CHECK IF THE USERCHATS EXISTS
-    const userChats = await UserChats.find({ userId: userId });
+    const userChats = await UserChats.find({ userId: userId }); 
 
     // IF DOESN'T EXIST CREATE A NEW ONE AND ADD THE CHAT IN THE CHATS ARRAY
     if (!userChats.length) {
@@ -94,21 +100,23 @@ app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
   }
 });
 
-app.get("/api/userchats", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
+app.get("/api/userchats", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req)
 
   try { 
     const userChats = await UserChats.find({ userId });
 
-    res.status(200).send(userChats[0].chats);
+    res.status(200).send(userChats[0]?.chats);
   } catch (err) {
     console.log(err);
     res.status(500).send("Error fetching userchats!");
   }
 });
 
-app.get("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
+app.get("/api/chats/:id", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req)
 
   try {
     const chat = await Chat.findOne({ _id: req.params.id, userId });
@@ -128,10 +136,12 @@ app.get("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
   }
 });
 
-app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
+app.put("/api/chats/:id", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req)
 
   const { question, answer, img } = req.body;
+
 
   const newItems = [
     ...(question
@@ -159,16 +169,16 @@ app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("error in backend using Clerk", err.stack);
   res.status(401).send("Unauthenticated!");
 });
 
 // PRODUCTION
-app.use(express.static(path.join(__dirname, "../client/dist")));
+// app.use(express.static(path.join(__dirname, "../client")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "../client", "index.html"));
+// });
 
 app.listen(port, () => {
   connect();

@@ -1,0 +1,54 @@
+.chatWrapper{
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex:1;
+  overflow-y: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+
+  .chat{
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 15px;
+      overflow-y: scroll;
+        /* Allows vertical scrolling */
+        scrollbar-width: none;
+        /* For Firefox */
+        -ms-overflow-style: none;
+        /* For Internet Explorer 10+ */
+      max-height: calc(100% - 50px);
+      margin-bottom: auto;
+
+      p,li{
+        margin: 10px 0px;
+      }
+
+      &::-webkit-scrollbar {
+        /* For Chrome, Safari, Opera */
+        width: 0;
+        height: 0;
+      }
+
+       
+      .message{
+        padding: 20px;
+
+        &.user{
+          background-color: #2c2937;
+          border-radius: 20px;
+          max-width: 80%;
+          align-self: flex-end;
+          margin-left: auto;
+        }
+      }
+    
+  }
+}
+

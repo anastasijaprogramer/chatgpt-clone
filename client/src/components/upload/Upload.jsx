@@ -3,10 +3,11 @@ import { useRef } from "react";
 
 const urlEndpoint = import.meta.env.VITE_IMAGE_KIT_ENDPOINT;
 const publicKey = import.meta.env.VITE_IMAGE_KIT_PUBLIC_KEY;
+const domainName = import.meta.env.VITE_API_URL;
 
 const authenticator = async () => {
   try {
-    const response = await fetch("http://localhost:3000/api/upload");
+    const response = await fetch(`${domainName}/api/upload`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -55,13 +56,18 @@ const Upload = ({ setImg }) => {
     reader.readAsDataURL(file);
   };
 
+  const onImageUpload = (e) => {
+    e.preventDefault();
+    ikUploadRef.current.click();
+  };
+
   return (
     <IKContext urlEndpoint={urlEndpoint} publicKey={publicKey} authenticator={authenticator}>
       <IKUpload fileName="test-upload.png" onError={onError} onSuccess={onSuccess} useUniqueFileName={true} onUploadProgress={onUploadProgress} onUploadStart={onUploadStart} style={{ display: "none" }} ref={ikUploadRef} />
       {
-        <label onClick={() => ikUploadRef.current.click()}>
-          <img src="/attachment.png" alt="" />
-        </label>
+        <button onClick={onImageUpload}>
+          <img src="/attachment.png" alt="attachment-icon" />
+        </button>
       }
     </IKContext>
   );

@@ -1,10 +1,14 @@
 .rootLayout {
-  padding: 16px 64px;
+  padding: 0px;
+  padding-left: 15px;
   height: 100vh;
   display: flex;
   flex-direction: column;
 
   header {
+    padding: 0px 15px;
+    border-bottom: 1px solid rgba(221, 221, 221, 0.1);
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -24,6 +28,6 @@
 
   main {
     flex: 1;
-    overflow: hidden;
+     overflow: hidden;
   }
 }

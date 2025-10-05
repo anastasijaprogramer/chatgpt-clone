@@ -30,6 +30,7 @@ app.use(express.json());
 const connect = async () => {
   try {
     await mongoose.connect(process.env.MONGO);
+    // usualy this is the error in console if mongo connection fails
     console.log("Connected to MongoDB");
   } catch (err) {
     console.log(err);
@@ -166,6 +167,28 @@ app.put("/api/chats/:id", requireAuth(), async (req, res) =>
     console.log(err);
     res.status(500).send("Error adding conversation!");
   }
+});
+
+app.delete("/api/chats/:id", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req);
+  const chatId = req.params.id;
+
+  try {
+    await Chat.deleteOne({ _id: chatId, userId });
+
+    await UserChats.updateOne(
+      { userId },
+      { $pull: { chats: { _id: chatId } } }
+    );
+
+    res.status(200).send({ success: true });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error deleting chat!");
+  }
+
 });
 
 app.use((err, req, res, next) => {

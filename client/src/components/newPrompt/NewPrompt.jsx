@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import "./newPrompt.css";
+import "./newPrompt.scss";
 import Upload from "../upload/Upload";
 import { IKImage } from "imagekitio-react";
 import model from "../../lib/gemini";
@@ -25,7 +25,7 @@ const NewPrompt = ({ data }) => {
         }))
       : [],
     generationConfig: {
-      // maxOutputTokens: 100,
+      //  maxOutputTokens: 1000,
     },
   });
 
@@ -116,14 +116,7 @@ const NewPrompt = ({ data }) => {
     <>
       {/* ADD NEW CHAT */}
       {img.isLoading && <div className="">Loading...</div>}
-      {img.dbData?.filePath && (
-        <IKImage
-          urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT}
-          path={img.dbData?.filePath}
-          width="380"
-          transformation={[{ width: 380 }]}
-        />
-      )}
+      {img.dbData?.filePath && <IKImage urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT} path={img.dbData?.filePath} width="380" transformation={[{ width: 380 }]} />}
       {question && <div className="message user">{question}</div>}
       {answer && (
         <div className="message">

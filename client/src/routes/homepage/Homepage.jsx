@@ -11,7 +11,7 @@ const Homepage = () => {
       <img src="/orbital.png" alt="" className="orbital" />
       <div className="left">
         <h1>Doorman</h1>
-        <h2>Supercharge your creativity and productivity</h2>
+        <h2>Unwind your sole and mind</h2>
         <h3>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Placeat sint dolorem doloribus, architecto dolor.</h3>
         <Link to="/dashboard">Get Started</Link>
       </div>
@@ -20,7 +20,7 @@ const Homepage = () => {
           <div className="bgContainer">
             <div className="bg"></div>
           </div>
-          <img src="/bot.png" alt="" className="bot" />
+          <img src="/burden.png" alt="" className="bot" />
           <div className="chat">
             <img src={typingStatus === "human1" ? "/human1.jpeg" : typingStatus === "human2" ? "/human2.jpeg" : "bot.png"} alt="" />
             <TypeAnimation

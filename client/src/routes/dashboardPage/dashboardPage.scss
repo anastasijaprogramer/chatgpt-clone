@@ -1,5 +1,5 @@
 .dashboardPage {
-  height: 100%;
+  height: calc(100dvh - 50px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,6 +60,7 @@
       }
     }
   }
+
   .formContainer {
     margin-top: auto;
     width: 50%;
@@ -84,6 +85,7 @@
         outline: none;
         color: #ececec;
       }
+
       button {
         background-color: #605e68;
         border-radius: 50%;

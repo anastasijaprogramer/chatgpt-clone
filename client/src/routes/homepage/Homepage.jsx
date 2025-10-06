@@ -10,7 +10,7 @@ const Homepage = () => {
     <div className="homepage">
       <img src="/orbital.png" alt="" className="orbital" />
       <div className="left">
-        <h1>PsyPal AI</h1>
+        <h1>Doorman</h1>
         <h2>Supercharge your creativity and productivity</h2>
         <h3>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Placeat sint dolorem doloribus, architecto dolor.</h3>
         <Link to="/dashboard">Get Started</Link>

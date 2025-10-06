@@ -171,7 +171,7 @@ app.put("/api/chats/:id", requireAuth(), async (req, res) =>
 
 app.delete("/api/chats/:id", requireAuth(), async (req, res) =>
 {
-  const { userId } = getAuth(req);
+  const { userId } = getAuth(req); 
   const chatId = req.params.id;
 
   try {

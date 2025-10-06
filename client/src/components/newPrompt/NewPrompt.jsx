@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 const NewPrompt = ({ data }) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [inputText, setInputText] = useState("");
 
   const [img, setImg] = useState({
     isLoading: false,
@@ -94,10 +95,10 @@ const NewPrompt = ({ data }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const text = e.target.text.value;
-    if (!text) return;
+    if (!inputText.trim()) return;
 
-    add(text, false);
+    add(inputText, false);
+    setInputText("");
   };
 
   // IN PRODUCTION WE DON'T NEED IT
@@ -124,12 +125,12 @@ const NewPrompt = ({ data }) => {
         </div>
       )}
       <div className="endChat" ref={endRef}></div>
-      <form className="newForm" onSubmit={handleSubmit} ref={formRef}>
+      <form className="newForm" onSubmit={handleSubmit} ref={formRef} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit(e)}>
         <Upload setImg={setImg} />
         <input id="file" type="file" multiple={false} hidden />
-        <input type="text" name="text" placeholder="Ask anything..." />
+        <input type="text" name="text" placeholder="Ask anything..." value={inputText} onChange={(e) => setInputText(e.target.value)} />
         <button>
-          <img src="/arrow.png" alt="" />
+          <img src="/arrow.png" alt="arrow" />
         </button>
       </form>
     </>

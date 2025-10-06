@@ -8,7 +8,7 @@ const chatSchema = new mongoose.Schema(
     },
     history: [
       {
-        role: {
+        role: { 
           type: String,
           enum: ["user", "model"],
           required: true,

@@ -71,7 +71,7 @@ const ChatList = () => {
           : Array.isArray(data) &&
             data.map((chat) => (
               <div key={chat._id} className={`chat-item ${pathname.includes(chat._id) ? "active" : ""}`}>
-                <Link to={`/dashboard/chats/${chat._id}`} style={{ flex: 1 }}>
+                <Link to={`/dashboard/chats/${chat._id}`} className="chat-item-link">
                   {chat.title}
                 </Link>
                 <button className="delete-button" onClick={() => deleteMutation.mutate(chat._id)} title="Delete chat">

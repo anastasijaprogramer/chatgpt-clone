@@ -1,31 +1,24 @@
-import {
-  GoogleGenerativeAI,
-  HarmBlockThreshold, 
-  HarmCategory,
-} from "@google/generative-ai";
 
-const safetySetting = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-  },
-];
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_PUBLIC_KEY);
+export async function generateFromServer({ prompt, model, temperature, maxOutputTokens })
+{
+  const res = await fetch(`${API_BASE}/api/generate`, {
+    method: "POST",
+    credentials: "include", // ako koristiš session/cookie auth
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt, model, temperature, maxOutputTokens }),
+  });
 
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-  // contents: "Explain how AI works in a few words",
-  safetySetting,
-});
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Server error: ${res.status} - ${text}`);
+  }
 
+  const data = await res.json();
+  return data; // { text, raw }
+}
 
-export default model;
+export default { generateFromServer };

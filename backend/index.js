@@ -6,15 +6,15 @@ import ImageKit from "imagekit";
 import mongoose from "mongoose";
 import Chat from "./models/chat.js";
 import UserChats from "./models/userChats.js";
-import 'dotenv/config'
+import { GoogleGenAI } from "@google/genai";
 import { clerkMiddleware, clerkClient, requireAuth, getAuth } from '@clerk/express'
+import 'dotenv/config';
 
 
 const port = process.env.PORT || 3000;
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
@@ -27,7 +27,37 @@ app.use(
 app.use(clerkMiddleware())
 app.use(express.json());
 
-const connect = async () => {
+const client = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_API_KEY,
+});
+
+// Simple text generation endpoint
+app.post("/api/generate", async (req, res) =>
+{
+  try {
+    const { prompt, model = "gemini-2.5-flash", temperature = 0.7, maxOutputTokens = 1024 } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+
+    const response = await client.models.generateContent({
+      model,
+      contents: prompt,
+      temperature,
+      maxOutputTokens,
+    });
+
+    const text = response?.text;
+
+    res.json({ text, raw: response });
+  } catch (err) {
+    console.error("genai error:", err);
+    res.status(500).json({ error: err.message ?? "Server error" });
+  }
+});
+
+
+
+const connect = async () =>
+{
   try {
     await mongoose.connect(process.env.MONGO);
     // usualy this is the error in console if mongo connection fails
@@ -43,17 +73,19 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGE_KIT_PRIVATE_KEY,
 });
 
-app.get("/api/upload", (req, res) => {
+app.get("/api/upload", (req, res) =>
+{
   const result = imagekit.getAuthenticationParameters();
   res.send(result);
 });
 
-app.post("/api/chats", requireAuth(), async (req, res) =>
+app.post("/api/chat", requireAuth(), async (req, res) =>
 {
   const { userId } = getAuth(req);
   const { text } = req.body;
 
   if (!userId) return res.status(401).send("userId missing");
+
   try {
     // CREATE A NEW CHAT
     const newChat = new Chat({
@@ -64,7 +96,7 @@ app.post("/api/chats", requireAuth(), async (req, res) =>
     const savedChat = await newChat.save();
 
     // CHECK IF THE USERCHATS EXISTS
-    const userChats = await UserChats.find({ userId: userId }); 
+    const userChats = await UserChats.find({ userId: userId });
 
     // IF DOESN'T EXIST CREATE A NEW ONE AND ADD THE CHAT IN THE CHATS ARRAY
     if (!userChats.length) {
@@ -105,7 +137,7 @@ app.get("/api/userchats", requireAuth(), async (req, res) =>
 {
   const { userId } = getAuth(req)
 
-  try { 
+  try {
     const userChats = await UserChats.find({ userId });
 
     res.status(200).send(userChats[0]?.chats);
@@ -171,7 +203,7 @@ app.put("/api/chats/:id", requireAuth(), async (req, res) =>
 
 app.delete("/api/chats/:id", requireAuth(), async (req, res) =>
 {
-  const { userId } = getAuth(req); 
+  const { userId } = getAuth(req);
   const chatId = req.params.id;
 
   try {
@@ -191,7 +223,8 @@ app.delete("/api/chats/:id", requireAuth(), async (req, res) =>
 
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) =>
+{
   console.error("error in backend using Clerk", err.stack);
   res.status(401).send("Unauthenticated!");
 });
@@ -203,7 +236,8 @@ app.use((err, req, res, next) => {
 //   res.sendFile(path.join(__dirname, "../client", "index.html"));
 // });
 
-app.listen(port, () => {
+app.listen(port, () =>
+{
   connect();
   console.log("Server running on 3000");
 });

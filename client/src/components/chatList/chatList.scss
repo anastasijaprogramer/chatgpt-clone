@@ -60,6 +60,7 @@
     overflow: auto;
     transition: transform 0.3s ease;
     margin-top: 10px;
+    gap: 3px;
 
     .delete-button {
       background-color: transparent;
@@ -88,11 +89,20 @@
   }
 
   .chat-item {
-    padding: 4px 10px;
+    padding-right: 10px;
     border-radius: 10px;
     font-size: 0.875rem;
     display: flex;
     align-items: center;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+
+    .chat-item-link {
+      flex: 1;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+    }
 
     &:hover:not(.active) {
       background-color: #312e3d;
@@ -138,6 +148,7 @@
         flex-direction: column;
         background-color: transparent;
         align-items: flex-start;
+        justify-content: flex-start;
         gap: 4px;
         cursor: pointer;
         font-size: 12px;
@@ -148,10 +159,12 @@
         span {
           &:first-child {
             font-weight: 600;
+            text-align: left;
           }
 
           &:last-child {
             color: #888;
+            text-align: left;
           }
         }
       }

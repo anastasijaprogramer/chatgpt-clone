@@ -20,9 +20,8 @@ const DashboardLayout = () => {
 
   return (
     <div className="dashboardLayout">
-      <div className="menu">
-        <ChatList />
-      </div>
+      <ChatList />
+
       <div className="content">
         <header>header</header>
         <Outlet />

@@ -1,8 +1,41 @@
+.menu {
+  &.open {
+    width: 300px;
+
+    .open-sidemenu {
+      display: none;
+    }
+  }
+
+  &.closed {
+    width: 60px;
+
+    .body-content,
+    .close-sidemenu,
+    .title,
+    .logo {
+      display: none !important;
+    }
+
+    .open-sidemenu {
+      display: flex;
+      cursor: pointer;
+    }
+  }
+}
+
 .sidemenu {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding-top: 15px;
+  position: relative;
+
+  .top-sidemenu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
   .logo {
     display: flex;
@@ -14,6 +47,15 @@
     :hover {
       background-color: transparent !important;
     }
+  }
+
+  .close-sidemenu {
+
+    cursor: pointer;
+    color: #888;
+    font-size: 12px;
+    margin-left: 10px;
+    margin-bottom: 10px;
   }
 
   hr {

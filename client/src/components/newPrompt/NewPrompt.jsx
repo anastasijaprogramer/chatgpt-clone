@@ -29,7 +29,7 @@ const NewPrompt = ({ data }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ question: q, answer: a, imgPath }) => {
+    mutationFn: ({ text: q = "", answer: a, imgPath }) => {
       return fetch(`${import.meta.env.VITE_API_URL}/api/chats/${data._id}`, {
         method: "PUT",
         credentials: "include",
@@ -37,12 +37,18 @@ const NewPrompt = ({ data }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question: q.length ? q : undefined,
+          text: q?.length ? q : undefined,
           answer: a,
           role: "user",
           img: imgPath || undefined,
         }),
-      }).then((res) => res.json());
+      }).then(async (res) => {
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(`Server error ${res.status}: ${txt}`);
+        }
+        return res.json();
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat", data._id] }).then(() => {
@@ -69,7 +75,7 @@ const NewPrompt = ({ data }) => {
     try {
       const payload = {
         prompt: text,
-        img: Object.entries(img.aiData).length ? img.aiData : null,
+        img: Object.entries(img.aiData)?.length ? img.aiData : null,
         history: Array.isArray(data?.history)
           ? data.history.map(({ role, parts }) => ({
               role,
@@ -85,7 +91,7 @@ const NewPrompt = ({ data }) => {
       if (result) {
         setAnswer(result);
         mutation.mutate({
-          question: isInitial ? undefined : text,
+          text: isInitial ? undefined : text,
           answer: result,
           imgPath: img.dbData?.filePath || undefined,
         });

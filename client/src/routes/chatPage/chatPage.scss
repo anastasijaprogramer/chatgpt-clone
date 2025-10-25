@@ -26,9 +26,12 @@
     max-height: calc(100% - 50px);
     margin-bottom: auto;
 
-    p,
+    p {
+      margin: 5px 0px;
+    }
+
     li {
-      margin: 10px 0px;
+      margin: 10px 0
     }
 
     &::-webkit-scrollbar {

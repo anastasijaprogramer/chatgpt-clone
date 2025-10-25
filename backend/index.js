@@ -9,6 +9,7 @@ import UserChats from "./models/userChats.js";
 import { GoogleGenAI } from "@google/genai";
 import { clerkMiddleware, clerkClient, requireAuth, getAuth } from '@clerk/express'
 import 'dotenv/config';
+import { capitalizeFirstLetter } from "./utils.js";
 
 
 const port = process.env.PORT || 3000;
@@ -31,21 +32,74 @@ const client = new GoogleGenAI({
   apiKey: process.env.GOOGLE_API_KEY,
 });
 
-// Simple text generation endpoint
+// Prompt Gemini using multimodal context (img and text)
 app.post("/api/generate", async (req, res) =>
 {
   try {
-    const { prompt, model = "gemini-2.5-flash", temperature = 0.7, maxOutputTokens = 1024 } = req.body;
+    const {
+      prompt,
+      model = "gemini-2.5-flash",
+      temperature = 0.7,
+      maxOutputTokens = 1024,
+      history = [],
+      img = null  // accepts { inlineData: "data:image/..;base64,..."} or { url: "https://..." }
+    } = req.body;
+
     if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+
+    const historyText = Array.isArray(history)
+      ? history
+        .map((item) =>
+        {
+          const role = item.role === "model" ? "Assistant" : "User";
+          const text = item.parts?.[0]?.text ?? "";
+          return `${role}: ${text}`;
+        })
+        .join("\n")
+      : "";
+
+    const combinedPrompt =
+      (historyText ? historyText + "\n" : "") + `User: ${prompt}`;
+
+    // Build contents: include image content if present, then the text prompt
+    const contents = [];
+    if (img) {
+      // inline base64 data (data:<mime>;base64,....)
+      if (img.inlineData && typeof img.inlineData === "string") {
+        const inline = img.inlineData;
+        const base64 = inline.includes(",") ? inline.split(",")[1] : inline;
+        contents.push({
+          type: "image",
+          image: { imageBytes: base64 }, // GenAI accepts raw base64 image bytes
+        });
+      } else if (img.url) {
+        contents.push({
+          type: "image",
+          image: { uri: img.url },
+        });
+      }
+    }
+
+    // Add the text content (conversation + current prompt)
+    contents.push({
+      type: "text",
+      text: combinedPrompt,
+    });
 
     const response = await client.models.generateContent({
       model,
-      contents: prompt,
+      contents,
       temperature,
       maxOutputTokens,
     });
 
-    const text = response?.text;
+    // const text = response?.text;
+    // Extract the model text from possible response shapes
+    const text =
+      response?.text ||
+      response?.output?.[0]?.content?.find((c) => c.type === "output_text")?.text ||
+      response?.candidates?.[0]?.output ||
+      "";
 
     res.json({ text, raw: response });
   } catch (err) {
@@ -105,7 +159,7 @@ app.post("/api/chat", requireAuth(), async (req, res) =>
         chats: [
           {
             _id: savedChat._id,
-            title: text.substring(0, 40),
+            title: capitalizeFirstLetter(text.substring(0, 40)),
           },
         ],
       });
@@ -119,7 +173,7 @@ app.post("/api/chat", requireAuth(), async (req, res) =>
           $push: {
             chats: {
               _id: savedChat._id,
-              title: text.substring(0, 40),
+              title: capitalizeFirstLetter(text.substring(0, 40)),
             },
           },
         }
@@ -171,33 +225,39 @@ app.get("/api/chats/:id", requireAuth(), async (req, res) =>
 
 app.put("/api/chats/:id", requireAuth(), async (req, res) =>
 {
-  const { userId } = getAuth(req)
+  const { userId } = getAuth(req);
 
-  const { question, answer, img } = req.body;
+  const { text, answer, img } = req.body;
 
+  if (!userId) return res.status(401).send("userId missing");
+  if (!answer && !text) return res.status(400).send("Missing text or answer");
 
   const newItems = [
-    ...(question
-      ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }]
+    ...(text
+      ? [{ role: "user", parts: [{ text }], ...(img ? { img } : {}) }]
       : []),
-    { role: "model", parts: [{ text: answer }] },
+    ...(answer ? [{ role: "model", parts: [{ text: answer }] }] : []),
   ];
 
   try {
-    const updatedChat = await Chat.updateOne(
-      { _id: req.params.id, userId },
-      {
-        $push: {
-          history: {
-            $each: newItems,
-          },
-        },
-      }
-    );
-    res.status(200).send(updatedChat);
+    const chat = await Chat.findOne({ _id: req.params.id, userId });
+    if (!chat) return res.status(404).send("Chat not found");
+
+    // Append new items
+    chat.history = chat.history.concat(newItems);
+    await chat.save();
+
+    // Update the cached title in UserChats (if exists)
+    const title = capitalizeFirstLetter((chat.history?.[0]?.parts?.[0]?.text || "").substring(0, 40));
+    await UserChats.updateOne(
+      { userId, "chats._id": chat._id },
+      { $set: { "chats.$.title": title } }
+    ).catch(() => { }); // ignore if userChats entry not present
+
+    res.status(200).json({ success: true, chat });
   } catch (err) {
-    console.log(err);
-    res.status(500).send("Error adding conversation!");
+    console.error("Error updating chat:", err);
+    res.status(500).send("Error updating chat!");
   }
 });
 

@@ -1,15 +1,15 @@
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
-export async function generateFromServer({ prompt, model, temperature, maxOutputTokens })
+export async function generateFromServer(payload)
 {
   const res = await fetch(`${API_BASE}/api/generate`, {
     method: "POST",
-    credentials: "include", // ako koristiš session/cookie auth
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ prompt, model, temperature, maxOutputTokens }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {

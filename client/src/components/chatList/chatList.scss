@@ -8,14 +8,21 @@
   }
 
   &.closed {
-    width: 60px;
+    width: 30px;
 
     .body-content,
     .close-sidemenu,
     .title,
-    .logo {
+    .logo,
+    .bottom>.upgrade {
       display: none !important;
     }
+
+    .bottom {
+      background-color: transparent;
+      padding-inline: 0;
+    }
+
 
     .open-sidemenu {
       display: flex;
@@ -176,6 +183,17 @@
     align-items: center;
     padding-bottom: 15px;
     gap: 10px;
+    gap: px;
+    background-color: #3f3f43;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 20px;
+
+    .user {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     .upgrade {
       font-size: 12px;

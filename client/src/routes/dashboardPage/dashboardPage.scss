@@ -12,7 +12,6 @@
     align-items: center;
     justify-content: center;
     width: 50%;
-    gap: 50px;
 
     .logo {
       display: flex;
@@ -34,14 +33,23 @@
       }
     }
 
+    .choose-assistant {
+      font-weight: 500;
+      font-size: 20px;
+      color: #3f3f43;
+      margin-top: 10px;
+    }
+
     .options {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 50px;
+      margin-top: 50px;
 
       .option {
+        cursor: pointer;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -56,6 +64,12 @@
           width: 40px;
           height: 40px;
           object-fit: cover;
+        }
+
+        .assistant-name {
+          color: #ececec;
+          font-size: 16px;
+          font-weight: 400;
         }
       }
     }

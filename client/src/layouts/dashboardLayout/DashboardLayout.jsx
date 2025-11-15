@@ -23,7 +23,7 @@ const DashboardLayout = () => {
       <ChatList />
 
       <div className="content">
-        <header>header</header>
+        <header></header>
         <Outlet />
       </div>
     </div>

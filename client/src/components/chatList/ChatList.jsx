@@ -48,12 +48,12 @@ const ChatList = () => {
             <span className="title">Doorman AI</span>
           </Link>
           <span className="close-sidemenu" onClick={toggleSidemenuOpen}>
-            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#e3e3e3">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3">
               <path d="M660-320v-320L500-480l160 160ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm120-80v-560H200v560h120Zm80 0h360v-560H400v560Zm-80 0H200h120Z" />
             </svg>
           </span>
           <span className="open-sidemenu" onClick={toggleSidemenuOpen}>
-            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#e3e3e3">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3">
               <path d="M312-636v312l168-156-168-156ZM211-144q-27.64 0-47.32-19.68T144-211v-538q0-27.64 19.68-47.32T211-816h538q27.64 0 47.32 19.68T816-749v538q0 27.64-19.68 47.32T749-144H211Zm413-72h120v-528H624v528Zm-72 0v-528H216v528h336Zm72 0h120-120Z" />
             </svg>
           </span>
@@ -76,11 +76,13 @@ const ChatList = () => {
           <hr />
           <h6 className={`title ${isChatListOpen ? "open" : "closed"}`} onClick={toggleChatListOpen}>
             CHATS
-            <span className="toggle-arrow">
-              <svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="10px" fill="#e3e3e3">
-                <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z" />
-              </svg>
-            </span>
+            {data && data.length > 0 && (
+              <span className="toggle-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" height="10px" viewBox="0 -960 960 960" width="10px" fill="#e3e3e3">
+                  <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z" />
+                </svg>
+              </span>
+            )}
           </h6>
           <div className={`list ${isChatListOpen ? "open" : "closed"}`}>
             {isPending

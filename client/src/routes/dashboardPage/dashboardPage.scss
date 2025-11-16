@@ -30,6 +30,7 @@
         background-clip: text;
         -webkit-background-clip: text;
         color: transparent;
+        text-align: center;
       }
     }
 
@@ -53,6 +54,8 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 10px;
         font-weight: 300;
         font-size: 14px;
@@ -60,9 +63,24 @@
         border: 1px solid #555;
         border-radius: 20px;
 
+
+        &.selected {
+          transition: all 0.3s ease;
+
+          &:first-child {
+            border-color: #217bfe;
+            box-shadow: 0 0 10px rgba(33, 123, 254, 0.5);
+          }
+
+          &:last-child {
+            border-color: #ff3784;
+            box-shadow: 0 0 10px rgba(248, 64, 131, 0.5);
+          }
+        }
+
         img {
-          width: 40px;
-          height: 40px;
+          width: 45px;
+          height: 45px;
           object-fit: cover;
         }
 
@@ -70,6 +88,10 @@
           color: #ececec;
           font-size: 16px;
           font-weight: 400;
+        }
+
+        .assistant-description {
+          text-align: left;
         }
       }
     }
@@ -98,6 +120,7 @@
         border: none;
         outline: none;
         color: #ececec;
+        font-size: 15px;
       }
 
       button {

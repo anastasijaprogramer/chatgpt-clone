@@ -40,6 +40,7 @@ const NewPrompt = ({ data }) => {
           text: q?.length ? q : undefined,
           answer: a,
           role: "user",
+          chosenAssistant: data.chosenAssistant,
           img: imgPath || undefined,
         }),
       }).then(async (res) => {
@@ -75,6 +76,7 @@ const NewPrompt = ({ data }) => {
     try {
       const payload = {
         prompt: text,
+        chosenAssistant: data.chosenAssistant,
         img: Object.entries(img.aiData)?.length ? img.aiData : null,
         history: Array.isArray(data?.history)
           ? data.history.map(({ role, parts }) => ({
@@ -85,7 +87,6 @@ const NewPrompt = ({ data }) => {
       };
 
       const res = await generateFromServer(payload);
-      //  console.log("res: ", res.text);
       const result = res.text;
       setIsLoading(false);
       if (result) {

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./chatList.scss";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { SignedIn, UserButton } from "@clerk/clerk-react";
 
 const ChatList = () => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [isChatListOpen, setIsChatListOpen] = useState(true);
   const [isSidemenuOpen, setIsSidemenuOpen] = useState(true);
 
@@ -17,6 +18,12 @@ const ChatList = () => {
         credentials: "include",
       }).then((res) => res.json()),
   });
+
+  const handleDeleteChat = async (chatId) => {
+    await deleteMutation.mutateAsync(chatId);
+
+    if (pathname.includes(chatId)) navigate("/dashboard");
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (chatId) =>
@@ -30,6 +37,7 @@ const ChatList = () => {
   });
 
   const toggleChatListOpen = () => {
+    if (!data || data.length === 0) return;
     setIsChatListOpen((e) => !e);
   };
 
@@ -74,7 +82,7 @@ const ChatList = () => {
           </Link>
 
           <hr />
-          <h6 className={`title ${isChatListOpen ? "open" : "closed"}`} onClick={toggleChatListOpen}>
+          <h6 className={`title ${isChatListOpen ? "open" : "closed"} ${data && data.length > 0 ? "has-chats" : ""}`} onClick={toggleChatListOpen}>
             CHATS
             {data && data.length > 0 && (
               <span className="toggle-arrow">
@@ -84,7 +92,7 @@ const ChatList = () => {
               </span>
             )}
           </h6>
-          <div className={`list ${isChatListOpen ? "open" : "closed"}`}>
+          <div className={`list ${isChatListOpen && data && data.length > 0 ? "open" : "closed"}`}>
             {isPending
               ? "Loading..."
               : error
@@ -95,7 +103,7 @@ const ChatList = () => {
                     <Link to={`/dashboard/chats/${chat._id}`} className="chat-item-link">
                       {chat.title}
                     </Link>
-                    <button className="delete-button" onClick={() => deleteMutation.mutate(chat._id)} title="Delete chat">
+                    <button className="delete-button" onClick={() => handleDeleteChat(chat._id)} title="Delete chat">
                       <svg xmlns="http://www.w3.org/2000/svg" height="20px" width="20px" viewBox="0 -960 960 960" fill="#e3e3e3">
                         <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
                       </svg>

@@ -12,7 +12,7 @@
   overflow: hidden;
 
   .chat {
-    width: 50%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -25,9 +25,15 @@
     /* For Internet Explorer 10+ */
     max-height: calc(100% - 50px);
     margin-bottom: auto;
+    padding: 15px 25% 0;
 
-    p {
+    .chat-text {
       margin: 5px 0px;
+
+      p {
+        font-size: 16px;
+        line-height: 1.5;
+      }
     }
 
     li {
@@ -53,5 +59,11 @@
       }
     }
 
+  }
+}
+
+header {
+  .model-name {
+    opacity: 0.4;
   }
 }

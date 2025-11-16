@@ -1,9 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import "./dashboardPage.scss";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+const AssistantOptions = {
+  THERAPIST: "Therapist",
+  FRIEND: "Friend",
+};
 
 const DashboardPage = () => {
   const queryClient = useQueryClient();
+  // eslint-disable-next-line no-undef
+  const [chosenAssistant, setChosenAssistant] = useState(AssistantOptions.THERAPIST);
 
   const navigate = useNavigate();
 
@@ -15,7 +23,7 @@ const DashboardPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, chosenAssistant }),
       }).then((res) => res.json());
     },
     onSuccess: async (id) => {
@@ -27,8 +35,8 @@ const DashboardPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const text = e.target.text.value;
-    if (!text) return;
+    const text = e.target.prompt?.value;
+    if (!text || !chosenAssistant) return;
 
     mutation.mutate(text);
   };
@@ -39,21 +47,23 @@ const DashboardPage = () => {
         <div className="logo">
           <h1>Tell me all about it</h1>
         </div>
-        <p className="choose-assistant">Choose your assistant</p>
+        <p className="choose-assistant">Choose your assistant AI model</p>
         <div className="options">
-          <div className="option">
-            <img className="assistant-image" src="/chat.png" alt="chat" />
-            <span className="assistant-name">Therapist</span>
+          <div onClick={() => setChosenAssistant(AssistantOptions.THERAPIST)} className={`option ${chosenAssistant === AssistantOptions.THERAPIST ? "selected" : ""}`}>
+            {/* <img className="assistant-image" src="/chat.png" alt="chat" /> */}
+            <span className="assistant-name">Benny</span>
+            <p className="assistant-description">Therapist assistant. Let's unpack your feelings in a safe space.</p>
           </div>
-          <div className="option">
-            <img className="assistant-image" src="/image.png" alt="image" />
-            <span className="assistant-name">Friend</span>
+          <div onClick={() => setChosenAssistant(AssistantOptions.FRIEND)} className={`option ${chosenAssistant === AssistantOptions.FRIEND ? "selected" : ""}`}>
+            {/* <img className="assistant-image" src="/image.png" alt="image" /> */}
+            <span className="assistant-name">Anna</span>
+            <p className="assistant-description">A good friend. Let's chat about your day or share your thoughts.</p>
           </div>
         </div>
       </div>
       <div className="formContainer">
         <form onSubmit={handleSubmit}>
-          <input type="text" name="text" placeholder="Ask me anything..." />
+          <input autoComplete="off" id="prompt" type="text" name="prompt" placeholder="Ask me anything..." />
           <button>
             <img src="/arrow.png" alt="" />
           </button>

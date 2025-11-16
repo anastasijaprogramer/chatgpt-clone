@@ -42,6 +42,7 @@ app.post("/api/generate", async (req, res) =>
       model = "gemini-2.5-flash",
       temperature = 0.7,
       maxOutputTokens = 1024,
+      chosenAssistant,
       history = [],
       img = null  // accepts { inlineData: "data:image/..;base64,..."} or { url: "https://..." }
     } = req.body;
@@ -81,6 +82,11 @@ app.post("/api/generate", async (req, res) =>
       }
     }
 
+    // Determine effective chosen assistant
+    let effectiveChosen = chosenAssistant;
+    const systemInstruction = effectiveChosen === "Therapist"
+      ? process.env.SECRET_THERAPIST_INSTRUCTION
+      : process.env.SECRET_FRIEND_INSTRUCTION;
 
     // Add the text content (conversation + current prompt)
     contents.push({
@@ -93,9 +99,7 @@ app.post("/api/generate", async (req, res) =>
       contents,
       temperature,
       maxOutputTokens,
-      config: {
-        systemInstruction: process.env.SECRET_SYSTEM_INSTRUCTION,
-      },
+      config: { systemInstruction },
     });
 
     // const text = response?.text;
@@ -141,7 +145,7 @@ app.get("/api/upload", (req, res) =>
 app.post("/api/chat", requireAuth(), async (req, res) =>
 {
   const { userId } = getAuth(req);
-  const { text } = req.body;
+  const { text, chosenAssistant } = req.body;
 
   if (!userId) return res.status(401).send("userId missing");
 
@@ -149,7 +153,8 @@ app.post("/api/chat", requireAuth(), async (req, res) =>
     // CREATE A NEW CHAT
     const newChat = new Chat({
       userId: userId,
-      history: [{ role: "user", parts: [{ text }] }],
+      chosenAssistant: chosenAssistant,
+      history: [{ role: "user", parts: [{ text, chosenAssistant }] }],
     });
 
     const savedChat = await newChat.save();
@@ -232,21 +237,23 @@ app.put("/api/chats/:id", requireAuth(), async (req, res) =>
 {
   const { userId } = getAuth(req);
 
-  const { text, answer, img } = req.body;
+  const { text, answer, img, chosenAssistant } = req.body;
 
   if (!userId) return res.status(401).send("userId missing");
   if (!answer && !text) return res.status(400).send("Missing text or answer");
 
-  const newItems = [
-    ...(text
-      ? [{ role: "user", parts: [{ text }], ...(img ? { img } : {}) }]
-      : []),
-    ...(answer ? [{ role: "model", parts: [{ text: answer }] }] : []),
-  ];
-
   try {
     const chat = await Chat.findOne({ _id: req.params.id, userId });
     if (!chat) return res.status(404).send("Chat not found");
+
+    const effectiveChosen = chosenAssistant || chat.chosenAssistant || "Therapist";
+
+    const newItems = [
+      ...(text
+        ? [{ role: "user", chosenAssistant: effectiveChosen, parts: [{ text }], ...(img ? { img } : {}) }]
+        : []),
+      ...(answer ? [{ role: "model", chosenAssistant: effectiveChosen, parts: [{ text: answer }] }] : []),
+    ];
 
     // Append new items
     chat.history = chat.history.concat(newItems);

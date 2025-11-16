@@ -6,13 +6,15 @@ const chatSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    chosenAssistant: { type: String, default: "Therapist" },
     history: [
       {
-        role: { 
+        role: {
           type: String,
           enum: ["user", "model"],
           required: true,
         },
+        chosenAssistant: String,
         parts: [
           {
             text: {

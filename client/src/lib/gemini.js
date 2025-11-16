@@ -12,6 +12,7 @@ export async function generateFromServer(payload)
     body: JSON.stringify(payload),
   });
 
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Server error: ${res.status} - ${text}`);

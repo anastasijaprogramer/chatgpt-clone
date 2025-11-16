@@ -76,11 +76,15 @@
 
   .title {
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 5px;
-    cursor: pointer;
+
+    &.has-chats {
+      cursor: pointer;
+    }
+
 
     .toggle-arrow {
       display: inline-block;
@@ -101,6 +105,8 @@
         transform: rotate(90deg);
       }
     }
+
+
   }
 
   .list {

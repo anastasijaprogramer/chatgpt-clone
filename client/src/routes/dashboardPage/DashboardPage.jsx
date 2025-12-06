@@ -6,6 +6,7 @@ import { useState } from "react";
 const AssistantOptions = {
   THERAPIST: "Therapist",
   FRIEND: "Friend",
+  BOTH: "Both",
 };
 
 const DashboardPage = () => {
@@ -45,19 +46,24 @@ const DashboardPage = () => {
     <div className="dashboardPage">
       <div className="texts">
         <div className="logo">
-          <h1>Tell me all about it</h1>
+          <h1>
+            Tell me what’s on your mind. <br /> I’m listening
+          </h1>
         </div>
-        <p className="choose-assistant">Choose your assistant AI model</p>
+        <p className="choose-assistant">choose AI personality</p>
         <div className="options">
-          <div onClick={() => setChosenAssistant(AssistantOptions.THERAPIST)} className={`option ${chosenAssistant === AssistantOptions.THERAPIST ? "selected" : ""}`}>
+          <div className={`option ${chosenAssistant === AssistantOptions.THERAPIST ? "selected" : ""}`} onClick={() => setChosenAssistant(AssistantOptions.THERAPIST)}>
             {/* <img className="assistant-image" src="/chat.png" alt="chat" /> */}
-            <span className="assistant-name">Benny</span>
-            <p className="assistant-description">Therapist assistant. Let's unpack your feelings in a safe space.</p>
+            <span className="assistant-name">Psychiatrist</span>
+            <p className="assistant-description">Offers Deep Psychological Insight. </p>
           </div>
-          <div onClick={() => setChosenAssistant(AssistantOptions.FRIEND)} className={`option ${chosenAssistant === AssistantOptions.FRIEND ? "selected" : ""}`}>
+          <div className={`option ${chosenAssistant === AssistantOptions.FRIEND ? "selected" : ""}`} onClick={() => setChosenAssistant(AssistantOptions.FRIEND)}>
             {/* <img className="assistant-image" src="/image.png" alt="image" /> */}
-            <span className="assistant-name">Anna</span>
-            <p className="assistant-description">A good friend. Let's chat about your day or share your thoughts.</p>
+            <span className="assistant-name">Best Friend</span>
+            <p className="assistant-description">Emotional Support + Friendly Advice.</p>
+          </div>
+          <div className={`both-option ${chosenAssistant === AssistantOptions.BOTH ? "selected" : ""}`} onClick={() => setChosenAssistant(AssistantOptions.BOTH)}>
+            <span className="assistant-name">See both</span>
           </div>
         </div>
       </div>

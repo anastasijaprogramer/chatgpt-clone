@@ -85,3 +85,85 @@
     }
   }
 }
+
+.both-responses {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin: 20px 0;
+
+  .response-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .response-header {
+      font-weight: 600;
+      font-size: 14px;
+      opacity: 0.8;
+      padding: 8px 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    &.therapist .response-header {
+      background-color: rgba(96, 94, 104, 0.3);
+      color: #a8c5ff;
+    }
+
+    &.friend .response-header {
+      background-color: rgba(96, 94, 104, 0.3);
+      color: #ffa8d5;
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 20px;
+      background-color: rgba(44, 41, 55, 0.5);
+    }
+
+    .choose-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &.therapist-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+
+        &:hover {
+          background: linear-gradient(135deg, #7c8ff0 0%, #8b5ab8 100%);
+        }
+      }
+
+      &.friend-btn {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+
+        &:hover {
+          background: linear-gradient(135deg, #f5a3ff 0%, #ff6b7f 100%);
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 15px;
+  }
+}

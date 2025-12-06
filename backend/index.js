@@ -34,13 +34,40 @@ const client = new GoogleGenAI({
 
 // Safety settings for GenAI. Set GENAI_SAFETY=off to disable.
 const DEFAULT_GENAI_SAFETY_SETTINGS = [
-  { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-  { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
-  { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+  { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+  { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+  { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
 ];
+
+// Helper function to generate a summarized title using AI
+const generateChatTitle = async (userText) =>
+{
+  try {
+    const response = await client.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{
+        type: "text",
+        text: `Generate a short, concise title (maximum 5 words) that summarizes this message with no grammar mistakes: "${userText}". Only respond with the title, nothing else.`,
+      }],
+      config: {
+        temperature: 0.3,
+        maxOutputTokens: 20,
+        safetySettings: DEFAULT_GENAI_SAFETY_SETTINGS,
+      },
+    });
+
+    const title = response?.text?.trim() || userText.substring(0, 40);
+    // Remove quotes if AI wrapped the title in them
+    return title.replace(/^"|"$/g, '').substring(0, 50);
+  } catch (error) {
+    // Fallback to truncated text
+    return capitalizeFirstLetter(userText.substring(0, 40));
+  }
+};
 // Prompt Gemini using multimodal context (img and text)
 app.post("/api/generate", async (req, res) =>
 {
+  console.log('💬 API call to /api/generate - Main chat response');
   try {
     const {
       prompt,
@@ -49,7 +76,7 @@ app.post("/api/generate", async (req, res) =>
       maxOutputTokens = 10024,
       chosenAssistant,
       history = [],
-      img = null  // accepts { inlineData: "data:image/..;base64,..."} or { url: "https://..." }
+      img = null,
     } = req.body;
 
     if (!prompt) return res.status(400).json({ error: "Missing prompt" });
@@ -87,35 +114,77 @@ app.post("/api/generate", async (req, res) =>
       }
     }
 
-    // Determine effective chosen assistant
-    let effectiveChosen = chosenAssistant;
-    const systemInstruction = effectiveChosen === "Therapist"
-      ? process.env.SECRET_THERAPIST_INSTRUCTION
-      : process.env.SECRET_FRIEND_INSTRUCTION;
-
     // Add the text content (conversation + current prompt)
     contents.push({
       type: "text",
       text: combinedPrompt,
     });
 
-    // Build request config with optional safety settings
+    // Handle "Both" case: fetch both Therapist and Friend responses in parallel
+    if (chosenAssistant === "Both") {
+      const therapistPromise = client.models.generateContent({
+        model,
+        contents,
+        temperature,
+        maxOutputTokens,
+        config: {
+          systemInstruction: process.env.SECRET_THERAPIST_INSTRUCTION,
+          safetySettings: DEFAULT_GENAI_SAFETY_SETTINGS,
+        },
+      });
 
+      const friendPromise = client.models.generateContent({
+        model,
+        contents,
+        temperature,
+        maxOutputTokens,
+        config: {
+          systemInstruction: process.env.SECRET_FRIEND_INSTRUCTION,
+          safetySettings: DEFAULT_GENAI_SAFETY_SETTINGS,
+        },
+      });
+
+      const [therapistResponse, friendResponse] = await Promise.all([
+        therapistPromise,
+        friendPromise,
+      ]);
+
+      const extractText = (response) =>
+        response?.text ||
+        response?.output?.[0]?.content?.find((c) => c.type === "output_text")?.text ||
+        response?.candidates?.[0]?.output ||
+        "";
+
+      return res.json({
+        therapist: {
+          text: extractText(therapistResponse),
+          raw: therapistResponse,
+        },
+        friend: {
+          text: extractText(friendResponse),
+          raw: friendResponse,
+        },
+        mode: "both",
+      });
+    }
+
+    // Single assistant mode (Therapist or Friend)
+    const systemInstruction =
+      chosenAssistant === "Friend"
+        ? process.env.SECRET_FRIEND_INSTRUCTION
+        : process.env.SECRET_THERAPIST_INSTRUCTION;
 
     const response = await client.models.generateContent({
       model,
       contents,
       temperature,
       maxOutputTokens,
-      // config: genConfig,
       config: {
-        systemInstruction: systemInstruction,
+        systemInstruction,
         safetySettings: DEFAULT_GENAI_SAFETY_SETTINGS,
       },
     });
 
-    // const text = response?.text;
-    // Extract the model text from possible response shapes
     const text =
       response?.text ||
       response?.output?.[0]?.content?.find((c) => c.type === "output_text")?.text ||
@@ -271,17 +340,54 @@ app.put("/api/chats/:id", requireAuth(), async (req, res) =>
     chat.history = chat.history.concat(newItems);
     await chat.save();
 
-    // Update the cached title in UserChats (if exists)
-    const title = capitalizeFirstLetter((chat.history?.[0]?.parts?.[0]?.text || "").substring(0, 40));
-    await UserChats.updateOne(
-      { userId, "chats._id": chat._id },
-      { $set: { "chats.$.title": title } }
-    ).catch(() => { }); // ignore if userChats entry not present
 
+    // Send response immediately
     res.status(200).json({ success: true, chat });
+
+    // Generate AI title for the first response AFTER sending response
+    if (chat.history.length === 2 && chat.history[0].role === "user") {
+      const firstUserMessage = chat.history[0].parts[0].text;
+
+
+      // Add a delay before making the API call to avoid rate limit issues
+      setTimeout(async () =>
+      {
+        try {
+          const generatedTitle = await generateChatTitle(firstUserMessage);
+          await UserChats.updateOne(
+            { userId, "chats._id": chat._id },
+            { $set: { "chats.$.title": generatedTitle } }
+          );
+        } catch (err) {
+          console.error("Error updating chat title:", err);
+        }
+      }, 10000); // Wait 10 seconds before generating title to avoid rate limits
+    }
   } catch (err) {
     console.error("Error updating chat:", err);
     res.status(500).send("Error updating chat!");
+  }
+});
+
+app.patch("/api/chats/:id/assistant", requireAuth(), async (req, res) =>
+{
+  const { userId } = getAuth(req);
+  const { chosenAssistant } = req.body;
+
+  if (!userId) return res.status(401).send("userId missing");
+  if (!chosenAssistant) return res.status(400).send("Missing chosenAssistant");
+
+  try {
+    const chat = await Chat.findOne({ _id: req.params.id, userId });
+    if (!chat) return res.status(404).send("Chat not found");
+
+    chat.chosenAssistant = chosenAssistant;
+    await chat.save();
+
+    res.status(200).json({ success: true, chosenAssistant });
+  } catch (err) {
+    console.error("Error updating assistant:", err);
+    res.status(500).send("Error updating assistant!");
   }
 });
 

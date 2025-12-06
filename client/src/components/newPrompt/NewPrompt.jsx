@@ -9,6 +9,9 @@ import { generateFromServer } from "../../lib/gemini";
 const NewPrompt = ({ data }) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState();
+  const [therapistAnswer, setTherapistAnswer] = useState();
+  const [friendAnswer, setFriendAnswer] = useState();
+  const [chosenFromBoth, setChosenFromBoth] = useState(null);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,9 +27,25 @@ const NewPrompt = ({ data }) => {
 
   useEffect(() => {
     endRef?.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data, question, answer, img.dbData]);
+  }, [data, question, answer, therapistAnswer, friendAnswer, img.dbData]);
 
   const queryClient = useQueryClient();
+
+  const updateAssistantMutation = useMutation({
+    mutationFn: (newAssistant) => {
+      return fetch(`${import.meta.env.VITE_API_URL}/api/chats/${data._id}/assistant`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ chosenAssistant: newAssistant }),
+      }).then((res) => res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat", data._id] });
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: ({ text: q = "", answer: a, imgPath }) => {
@@ -56,6 +75,8 @@ const NewPrompt = ({ data }) => {
         formRef.current.reset();
         setQuestion("");
         setAnswer("");
+        setTherapistAnswer("");
+        setFriendAnswer("");
         setImg({
           isLoading: false,
           error: "",
@@ -87,20 +108,56 @@ const NewPrompt = ({ data }) => {
       };
 
       const res = await generateFromServer(payload);
-      const result = res.text;
       setIsLoading(false);
-      if (result) {
-        setAnswer(result);
-        mutation.mutate({
-          text: isInitial ? undefined : text,
-          answer: result,
-          imgPath: img.dbData?.filePath || undefined,
-        });
+
+      // Check if response is for "Both" mode
+      if (res.mode === "both") {
+        const therapistText = res.therapist?.text;
+        const friendText = res.friend?.text;
+
+        if (therapistText && friendText) {
+          setTherapistAnswer(therapistText);
+          setFriendAnswer(friendText);
+
+          // Store both responses in history
+          mutation.mutate({
+            text: isInitial ? undefined : text,
+            answer: `**Therapist:** ${therapistText}\n\n**Friend:** ${friendText}`,
+            imgPath: img.dbData?.filePath || undefined,
+          });
+        } else {
+          console.error("No reply from one or both models");
+        }
       } else {
-        console.error("No reply from model:", result);
+        // Single assistant mode
+        const result = res.text;
+        if (result) {
+          setAnswer(result);
+          mutation.mutate({
+            text: isInitial ? undefined : text,
+            answer: result,
+            imgPath: img.dbData?.filePath || undefined,
+          });
+        } else {
+          console.error("No reply from model:", result);
+        }
       }
     } catch (err) {
       console.error("Error communicating with backend:", err);
+    }
+  };
+
+  const handleChooseAssistant = (assistant) => {
+    setChosenFromBoth(assistant);
+    updateAssistantMutation.mutate(assistant);
+
+    // Keep only the chosen assistant's answer
+    if (assistant === "Therapist") {
+      setAnswer(therapistAnswer);
+      setFriendAnswer(null);
+    } else {
+      setAnswer(friendAnswer);
+      setTherapistAnswer(null);
     }
   };
 
@@ -128,11 +185,42 @@ const NewPrompt = ({ data }) => {
       {img.isLoading && <div>Loading...</div>}
       {img.dbData?.filePath && <IKImage urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT} path={img.dbData?.filePath} width="380" transformation={[{ width: 380 }]} />}
       {question && <div className="message user">{question}</div>}
-      {answer && (
+
+      {/* Single assistant response */}
+      {answer && !therapistAnswer && !friendAnswer && (
         <div className="message">
           <Markdown>{answer}</Markdown>
         </div>
       )}
+
+      {/* Both assistants response - side by side */}
+      {(therapistAnswer || friendAnswer) && !chosenFromBoth && (
+        <div className="both-responses">
+          {therapistAnswer && (
+            <div className="response-column therapist">
+              <div className="response-header">Psychiatrist (Benny)</div>
+              <div className="message">
+                <Markdown>{therapistAnswer}</Markdown>
+              </div>
+              <button className="choose-btn therapist-btn" onClick={() => handleChooseAssistant("Therapist")}>
+                Choose Psychiatrist
+              </button>
+            </div>
+          )}
+          {friendAnswer && (
+            <div className="response-column friend">
+              <div className="response-header">Best Friend (Anna)</div>
+              <div className="message">
+                <Markdown>{friendAnswer}</Markdown>
+              </div>
+              <button className="choose-btn friend-btn" onClick={() => handleChooseAssistant("Friend")}>
+                Choose Best Friend
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="endChat" ref={endRef}></div>
 
       <form className="newForm" onSubmit={handleSubmit} ref={formRef} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit(e)}>
